@@ -45,7 +45,7 @@ def check(position):
 
 
 # 提交登陆信息
-def login(username='shangxu0927', password='1994shangxu0927'):
+def login(username, password):
     url = 'https://kyfw.12306.cn/passport/web/login'
     data = {
         'username': username,
@@ -91,7 +91,7 @@ if __name__ == '__main__':
             break
     username = input('请输入用户名:')
     password = input('请输入密码:')
-    login()
+    login(username, password)
     userlogin()
     getlogin()
     response_ = myindex()
