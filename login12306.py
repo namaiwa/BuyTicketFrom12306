@@ -45,7 +45,7 @@ def check(position):
 
 
 # 提交登陆信息
-def login(username='shangxu0927', password='1994shangxu0927'):
+def login(username, password):
     url = 'https://kyfw.12306.cn/passport/web/login'
     data = {
         'username': username,
