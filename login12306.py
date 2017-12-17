@@ -41,7 +41,7 @@ def check(position):
     response = session.post(url, data=data, headers=headers, verify=False)
     # print(response.text)
     print(response.json()["result_message"])
-
+    return response.json()["result_code"]
 
 
 # 提交登陆信息
@@ -71,8 +71,8 @@ def getlogin():
     newapptk = response1.json()["newapptk"]
     response2 = session.post(url2, data={'tk': newapptk}, headers=headers, verify=False)
     # print(response1.text)                     # 验证通过
-    username = response2.json()["username"]
-    print('恭喜您，登陆成功， %s' % username)         # 打印username
+    uname = response2.json()["username"]
+    print('恭喜您，登陆成功， %s' % uname)         # 打印username
 
 
 # 跳转个人主页
@@ -80,16 +80,19 @@ def myindex():
     # url = 'https://kyfw.12306.cn/otn/index/initMy12306'
     url = 'https://kyfw.12306.cn/otn/login/userLogin'
     response = session.get(url, headers=headers, verify=False)
-    print(response.text)
+    return response.text
 
 
 if __name__ == '__main__':
-    pos = getimage()
-    check(pos)
-    # todo: 设置循环，验证码失败则重新加载图片验证
+    while 1:
+        pos = getimage()
+        result_code = check(pos)
+        if result_code == "4":
+            break
     username = input('请输入用户名:')
     password = input('请输入密码:')
     login()
     userlogin()
     getlogin()
-    myindex()
+    response_ = myindex()
+    print(response_)
