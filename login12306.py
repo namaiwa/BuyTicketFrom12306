@@ -91,7 +91,7 @@ if __name__ == '__main__':
             break
     username = input('请输入用户名:')
     password = input('请输入密码:')
-    login()
+    login(username,password)
     userlogin()
     getlogin()
     response_ = myindex()
