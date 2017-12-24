@@ -12,6 +12,7 @@ def getstation():
             info_dict = json.loads(f.read())
     except FileNotFoundError:
         print('缺少文件，请运行 “get_station_info.py” 获得 “traininfo.json” 文件')
+        return None
 
     while 1:
         startstation = input("输入出发地")
@@ -51,7 +52,7 @@ def getstation():
             if i.split('|')[0] != 'null':
                 train_info = i.split('|')
                 break
-        return train_info
+        return startstation, destination, date, train_info
     else:
         print(response.json()['messages'])
 

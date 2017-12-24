@@ -10,11 +10,13 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 class Login12306(object):
-    def __init__(self):
+    def __init__(self, username, password):
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Mobile Safari/537.36',
             }
         self.session = requests.Session()
+        self.username = username
+        self.password = password
 
     # 获取验证码图片
     def getimage(self):
@@ -84,14 +86,14 @@ class Login12306(object):
             result_code = self.check(pos)
             if result_code == "4":
                 break
-        username = input('请输入用户名:')
-        password = input('请输入密码:')
-        self.postvalue(username, password)
+        self.postvalue(self.username, self.password)
         self.getlogin()
         return self.myindex()
 
 
 if __name__ == '__main__':
-    loginto = Login12306()
+    username = input('请输入用户名:')
+    password = input('请输入密码:')
+    loginto = Login12306(username, password)
     response = loginto.login()
     print(response)
