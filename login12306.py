@@ -3,7 +3,7 @@
 # author: ninedays time:2017/12/14
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-
+from PIL import Image
 
 # 防止出现InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -23,6 +23,8 @@ class Login12306(object):
         img = response.content
         with open("check.jpg", 'wb',) as f:
             f.write(img)
+        check = Image.open("check.jpg")
+        check.show()
         position = input('请输入验证码位置（第一行序号为1~4，第二行为5~8.直接输入连续数字）')
         return position
 
