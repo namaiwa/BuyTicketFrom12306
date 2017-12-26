@@ -1,6 +1,6 @@
 # !/user/bin/env python
 # -*- coding:utf-8 -*-
-# author: ninedays time:2017/12/24
+# author: ninedays time:2017/12/20
 from login12306 import Login12306
 from choose_ticket import getstation
 import datetime
@@ -12,12 +12,12 @@ class Buyticket(Login12306):
     def __init__(self, username, password):
         Login12306.__init__(self, username, password)
 
-    # 好像没用，待验证！！！
-    def checkuser(self):
-        url = 'https://kyfw.12306.cn/otn/login/checkUser'
-        data = {'_json_att': ''}
-        resp = self.session.post(url, data=data, headers=self.headers, verify=False)
-        print(resp.json())
+    # 实测不需要这一步！
+    # def checkuser(self):
+    #     url = 'https://kyfw.12306.cn/otn/login/checkUser'
+    #     data = {'_json_att': ''}
+    #     resp = self.session.post(url, data=data, headers=self.headers, verify=False)
+    #     print(resp.json())
 
     def leftticket(self):
         info_ = train_info[0]
@@ -42,6 +42,7 @@ class Buyticket(Login12306):
         resp = self.session.post(url, data=data, headers=self.headers, verify=False)
         print(resp.json())
 
+    # 从网页中的js里获取两个变量，留作后面请求时构造data数据
     def confirmPassenger(self):
         url = 'https://kyfw.12306.cn/otn/confirmPassenger/initDc'
         resp = self.session.post(url, headers=self.headers, data={'_json_att': ''}, verify=False)
@@ -50,6 +51,7 @@ class Buyticket(Login12306):
         key_check = re.search(r'\'key_check_isChange\':\'(.+?)\'', resp.text).group(1)
         return token, key_check
 
+    # 请求道常用乘客信息，并返回第一个乘客信息
     def getPassengerDTOs(self, token):
         url = 'https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs'
         data = {'_json_att': '', 'REPEAT_SUBMIT_TOKEN': token}
@@ -57,15 +59,18 @@ class Buyticket(Login12306):
         passengerinfo = resp.json()['data']['normal_passengers'][0]
         return passengerinfo
 
+    # 不知道有没有用，待测试
     def getPassCodeNew(self):
         url = 'https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp'
         self.session.post(url, headers=self.headers, verify=False)
 
+    # 提交乘客和车辆信息等参数
     def checkOrderInfo(self, passengerinfo, token, key_check, traininfo):
         url1 = 'https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo'
         passenger_name = passengerinfo.get('passenger_name')
         passenger_id_no = passengerinfo.get('passenger_id_no')
         mobile_no = passengerinfo.get('mobile_no')
+        # todo:passengerTicketStr中第一个字符是O还是1，待处理，连带data2中seatType的值
         passengerTicketStr = 'O,0,1,'+passenger_name+',1,'+passenger_id_no+','+mobile_no+',N'
         oldPassengerStr = passenger_name+',1,'+passenger_id_no+',1_'
         data1 = {
@@ -122,6 +127,7 @@ class Buyticket(Login12306):
         print(data3)
         print(resp3.json())
 
+        #  实测发现下面这部分代码不运行也能成功订票，这段代码应该是订票成功后的跳转代码
         # url4 = 'https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime'
         # while True:
         #     num = time.time()
@@ -156,6 +162,7 @@ class Buyticket(Login12306):
         print(passengerinfo)
         self.getPassCodeNew()
         self.checkOrderInfo(passengerinfo, token, key_check, train_info)
+        print('购票成功，请登录12306，到未完成订单中查看并完成支付')
 
 
 if __name__ == '__main__':
