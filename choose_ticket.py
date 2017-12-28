@@ -15,7 +15,7 @@ def getstation():
         return None
 
     while 1:
-        startstation = input("输入出发地")
+        startstation = input("输入出发地:")
         from_station = info_dict.get(startstation)
         if from_station:
             break
@@ -23,7 +23,7 @@ def getstation():
             print('地址有误，请核实')
 
     while 1:
-        destination = input("请输入目的地")
+        destination = input("请输入目的地:")
         to_station = info_dict.get(destination)
         if to_station:
             break
@@ -31,13 +31,13 @@ def getstation():
             print('地址有误，请核实')
 
     while True:
-        date = input('情输入日期，格式为：YYYY-MM-DD')
+        date = input('情输入日期，格式为：YYYY-MM-DD:')
         if re.match(r'201\d-[01]\d-[0123]\d', date):
             break
         else:
             print('格式有误，请核实')
 
-    headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Mobile Safari/537.36', }
+    headers = {'User-Agent': 'User-Agent:Mozilla/5.0(compatible;MSIE9.0;WindowsNT6.1;Trident/5.0)', }
     params = {
         'leftTicketDTO.train_date': date,
         'leftTicketDTO.from_station': from_station,
@@ -45,7 +45,7 @@ def getstation():
         'purpose_codes': 'ADULT',
     }
     url = 'https://kyfw.12306.cn/otn/leftTicket/query'
-    response = requests.get(url, params=params, headers=headers)
+    response = requests.get(url, params=params, headers=headers, verify=False)
     if not response.json()['messages']:
         traininfolist = response.json()['data']['result']
         for i in traininfolist:

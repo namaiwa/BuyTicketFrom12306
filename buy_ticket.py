@@ -11,6 +11,7 @@ import time
 class Buyticket(Login12306):
     def __init__(self, username, password):
         Login12306.__init__(self, username, password)
+        self.getstation = getstation
 
     # 实测不需要这一步！
     # def checkuser(self):
@@ -19,7 +20,7 @@ class Buyticket(Login12306):
     #     resp = self.session.post(url, data=data, headers=self.headers, verify=False)
     #     print(resp.json())
 
-    def leftticket(self):
+    def leftticket(self, startstation, destination, date, train_info):
         info_ = train_info[0]
         info_list = re.findall(r'%.{2}', info_)
         for i in info_list:
@@ -38,9 +39,7 @@ class Buyticket(Login12306):
             'query_to_station_name': destination,
             'undefined': ''
         }
-        print(data)
         resp = self.session.post(url, data=data, headers=self.headers, verify=False)
-        print(resp.json())
 
     # 从网页中的js里获取两个变量，留作后面请求时构造data数据
     def confirmPassenger(self):
@@ -59,19 +58,22 @@ class Buyticket(Login12306):
         passengerinfo = resp.json()['data']['normal_passengers'][0]
         return passengerinfo
 
-    # 不知道有没有用，待测试
-    def getPassCodeNew(self):
-        url = 'https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp'
-        self.session.post(url, headers=self.headers, verify=False)
+    # 经验证，此部分吴影响，虽然Set-Cookie，但是其设置的cookie在登陆时已经设置，所以不需要这一步骤
+    # def getPassCodeNew(self):
+    #     url = 'https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp'
+    #     self.session.post(url, headers=self.headers, verify=False)
 
     # 提交乘客和车辆信息等参数
-    def checkOrderInfo(self, passengerinfo, token, key_check, traininfo):
+    def checkOrderInfo(self, passengerinfo, token, key_check, train_info):
         url1 = 'https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo'
         passenger_name = passengerinfo.get('passenger_name')
         passenger_id_no = passengerinfo.get('passenger_id_no')
         mobile_no = passengerinfo.get('mobile_no')
-        # todo:passengerTicketStr中第一个字符是O还是1，待处理，连带data2中seatType的值
-        passengerTicketStr = 'O,0,1,'+passenger_name+',1,'+passenger_id_no+','+mobile_no+',N'
+        if train_info[-2].isdigit():
+            train_type = '1'
+        else:
+            train_type = 'O'
+        passengerTicketStr = train_type+',0,1,'+passenger_name+',1,'+passenger_id_no+','+mobile_no+',N'
         oldPassengerStr = passenger_name+',1,'+passenger_id_no+',1_'
         data1 = {
             'cancel_flag': '2',
@@ -82,29 +84,34 @@ class Buyticket(Login12306):
             'randCode': '',
             'whatsSelect': '1',
             '_json_att': '',
-            'REPEAT_SUBMIT_TOKEN': 'token',
+            'REPEAT_SUBMIT_TOKEN': token,
             }
-        resp1 = self.session.post(url1, headers=self.headers, data=data1, verify=False)
-        print(data1)
-        print(resp1.json())
+        self.session.post(url1, headers=self.headers, data=data1, verify=False)
+        # print(data1)
+        # print(resp1.json())
 
+        year = train_info[13][:4]
+        month = train_info[13][4:6]
+        day = train_info[13][6:]
+        time_ = datetime.datetime(int(year), int(month), int(day))
+        t = time_.strftime('%a %b %d %Y ')
         url2 = 'https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount'
         data2 = {
-            'train_date': 'Thu Jan 11 2018 00:00:00 GMT+0800 (中国标准时间)',
-            'train_no': traininfo[2],
-            'stationTrainCode': traininfo[3],
-            'seatType': 'O',
+            'train_date': t+'00:00:00 GMT+0800 (中国标准时间)',
+            'train_no': train_info[2],
+            'stationTrainCode': train_info[3],
+            'seatType': train_type,
             'fromStationTelecode': train_info[6],
             'toStationTelecode': train_info[7],
             'leftTicket': train_info[12],
-            'purpose_codes': 00,
+            'purpose_codes': '00',
             'train_location': train_info[15],
             '_json_att': '',
             'REPEAT_SUBMIT_TOKEN': token,
         }
-        resp2 = self.session.post(url2, headers=self.headers, data=data2, verify=False)
-        print(data2)
-        print(resp2.json())
+        self.session.post(url2, headers=self.headers, data=data2, verify=False)
+        # print(data2)
+        # print(resp2.json())
 
         url3 = 'https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue'
         data3 = {
@@ -123,9 +130,9 @@ class Buyticket(Login12306):
             '_json_att': '',
             'REPEAT_SUBMIT_TOKEN': token
         }
-        resp3 = self.session.post(url3, headers=self.headers, data=data3, verify=False)
-        print(data3)
-        print(resp3.json())
+        self.session.post(url3, headers=self.headers, data=data3, verify=False)
+        # print(data3)
+        # print(resp3.text)
 
         #  实测发现下面这部分代码不运行也能成功订票，这段代码应该是订票成功后的跳转代码
         # url4 = 'https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime'
@@ -155,21 +162,19 @@ class Buyticket(Login12306):
         # print(resp5.json())
 
     def buyticket(self):
+        start_station, destination_, date_, traininfo = self.getstation()
         # self.checkuser()
-        self.leftticket()
-        token, key_check = self.confirmPassenger()
-        passengerinfo = self.getPassengerDTOs(token)
-        print(passengerinfo)
-        self.getPassCodeNew()
-        self.checkOrderInfo(passengerinfo, token, key_check, train_info)
+        self.leftticket(start_station, destination_, date_, traininfo)
+        submit_token, keycheck = self.confirmPassenger()
+        passengerinfo = self.getPassengerDTOs(submit_token)
+        # self.getPassCodeNew()
+        self.checkOrderInfo(passengerinfo, submit_token, keycheck, traininfo)
         print('购票成功，请登录12306，到未完成订单中查看并完成支付')
 
 
 if __name__ == '__main__':
     username = input('请输入用户名:')
     password = input('请输入密码:')
-    startstation, destination, date, train_info = getstation()
-    print(startstation, destination, date, train_info)
     buy = Buyticket(username, password)
     buy.login()
     buy.buyticket()

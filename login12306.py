@@ -4,6 +4,7 @@
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from PIL import Image
+import time
 
 # 防止出现InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -23,8 +24,10 @@ class Login12306(object):
         url = 'https://kyfw.12306.cn/passport/captcha/captcha-image?login_site=E&module=login&rand=sjrand'
         response = self.session.get(url, headers=self.headers, verify=False)
         img = response.content
-        with open("check.jpg", 'wb',) as f:
-            f.write(img)
+        f = open("check.jpg", 'wb')
+        f.write(img)
+        f.close()
+        time.sleep(0.1)
         check = Image.open("check.jpg")
         check.show()
         position = input('请输入验证码位置（第一行序号为1~4，第二行为5~8.直接输入连续数字）')
@@ -67,6 +70,7 @@ class Login12306(object):
         url1 = 'https://kyfw.12306.cn/passport/web/auth/uamtk'
         response1 = self.session.post(url1, data={'appid': 'otn'}, headers=self.headers, verify=False)
         newapptk = response1.json()["newapptk"]
+
         url2 = 'https://kyfw.12306.cn/otn/uamauthclient'
         response2 = self.session.post(url2, data={'tk': newapptk}, headers=self.headers, verify=False)
         # print(response1.text)                     # 验证通过
